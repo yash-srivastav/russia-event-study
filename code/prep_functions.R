@@ -1,6 +1,8 @@
 ewprep <- function(df, win){
   if (win == 1){
     df <- df |>
+      filter(COMNAM != "",
+             is.na(COMNAM) == F) |>
       arrange(COMNAM, date) |>
       mutate(day = wday(`Announcement Date`, label = TRUE),
              leave = ifelse((Status == 3 & `Sub-Status` == 4) | (Status == 4 & `Sub-Status` == 5),
@@ -15,6 +17,8 @@ ewprep <- function(df, win){
   }
   else if(win == 2){
     df <- df |>
+      filter(COMNAM != "",
+             is.na(COMNAM) == F) |>
       arrange(COMNAM, date) |>
       mutate(day = wday(`Announcement Date`, label = TRUE),
              leave = ifelse((Status == 3 & `Sub-Status` == 4) | (Status == 4 & `Sub-Status` == 5),
@@ -35,6 +39,8 @@ ewprep <- function(df, win){
   }
   else if(win == 4){
     df <- df |>
+      filter(COMNAM != "",
+             is.na(COMNAM) == F) |>
       arrange(COMNAM, date) |>
       mutate(day = wday(`Announcement Date`, label = TRUE),
              leave = ifelse((Status == 3 & `Sub-Status` == 4) | (Status == 4 & `Sub-Status` == 5),
@@ -92,4 +98,41 @@ kpp_var <- function(df, car){
   # return(var_b)
   return(var_ar)
   # return(var_adj)
+}
+
+vcov_adj_var <- function(df, sample_window, window){
+  #Calculating average days of overlapping event windows
+  overlap <- df |>
+    filter(is.na(event_date) == F) |>
+    group_by(event_date) |>
+    summarise(num = n())
+  delta <- mean(overlap$num, na.rm = TRUE)/window
+  #Calculating cov[AR]
+  xs <- sample_window |>
+    filter(COMNAM != "") |>
+    select(date, COMNAM, aret) |>
+    mutate(aret = round(aret, 3),
+           sar = aret/sd(aret, na.rm = TRUE)) |>
+    select(-aret) |>
+    pivot_wider(names_from = date,
+                values_from = sar,
+                values_fill = NA) |>
+    select(-COMNAM)
+  covmat <- round(cor(xs4, use = "complete.obs"), 5)
+  v <- mean(covmat, na.rm = TRUE)
+  
+  # Calculating variance of single-day standardized ARs
+  ftdf <- df |>
+    filter(leave == 1) |>
+    group_by(COMNAM) |> 
+    mutate(sd = sd(ab_ret, na.rm = TRUE)) |>
+    ungroup() |>
+    mutate(sar = ab_ret/sd,
+           mean_sar = mean(sar, na.rm = TRUE)) |>
+    group_by(COMNAM) |>
+    summarise(dev_sar = sum((sar - mean_sar)^2))
+  var_sar <- (1/nrow(ftdf))*sum(ftdf$dev_sar, na.rm = TRUE)
+  theta <- v/var_sar
+    
+  return(((1/nrow(ftdf))*var_sar*window)*(1+delta*(nrow(ftdf)-1))*theta)
 }

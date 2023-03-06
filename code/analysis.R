@@ -64,12 +64,18 @@ car1 <- build_car(ew1) |>
   mutate(scar = car/sd_ar)
 
 # Testing whether E[AR] = 0 (Campbell, Lo, McKinlay 1997)
-j1 <- mean(car1$car)/sqrt((1/(nrow(car1))^2)*sum(car1$sd_ar^2))
-j2 <- sqrt((nrow(car1)*(216-4))/(216-2))*mean(car1$scar)
+# J1-stat
+mean(car1$car)/sqrt((1/(nrow(car1))^2)*sum(car1$sd_ar^2))
+# J2-stat
+sqrt((nrow(car1)*(216-4))/(216-2))*mean(car1$scar)
 
-# Calculating variance (KPP 2018)
+# Calculating variance (KPP 2018) and corresponding t-stat; not preferred
 mean(car1$car)/sqrt(kpp_var(ew1,car1))
 kpp_var(ew1, car1)
+
+# Calculating covariance-variance ratio adjusted st. errors and corresponding t-stat; preferred
+mean(car1$scar)/sqrt(vcov_adj_var(ew1, sample_window, 1))
+
 
 # Plotting CARs
 ggplot(data = car1, aes(x = car)) +
@@ -96,6 +102,9 @@ sqrt((nrow(car2)*(216-4))/(216-2))*mean(car2$scar)
 mean(car2$car)/sqrt(kpp_var(ew2,car2))
 kpp_var(ew2, car2)
 
+# Calculating covariance-variance ratio adjusted st. errors and corresponding t-stat; preferred
+mean(car2$scar)/sqrt(vcov_adj_var(ew2, sample_window, 2))
+
 # Plotting CARs
 ggplot(data = car2, aes(x = car)) +
   geom_histogram(color = "black", fill = "white")
@@ -108,6 +117,19 @@ car4 <- build_car(ew4) |>
   left_join(sample_sd, by = "COMNAM") |>
   mutate(scar = car/sd_ar)
 
+# Testing whether E[AR] = 0 (Campbell, Lo, McKinlay 1997)
+#J1-stat
+mean(car4$car)/sqrt((1/(nrow(car4))^2)*sum(car4$sd_ar^2))
+#J2-stat
+sqrt((nrow(car4)*(216-4))/(216-2))*mean(car4$scar)
+
+# Calculating variance (KPP 2018) and corresponding t-stat; not preferred
+mean(car4$car)/sqrt(kpp_var(ew4,car4))
+kpp_var(ew4, car4)
+
+# Calculating covariance-variance ratio adjusted st. errors and corresponding t-stat; preferred
+mean(car4$scar)/sqrt(vcov_adj_var(ew4, sample_window, 4))
+
 # Plotting CARs
 ggplot(data = car4, aes(x = car)) +
   geom_histogram(color = "black", fill = "white")
@@ -115,16 +137,7 @@ ggplot(data = car4, aes(x = car)) +
 ggplot(data = car4, aes(x = scar)) +
   geom_histogram(color = "black", fill = "white")
 
-# Testing whether E[AR] = 0 (Campbell, Lo, McKinlay 1997)
-#J1-stat
-mean(car4$car)/sqrt((1/(nrow(car4))^2)*sum(car4$sd_ar^2))
-#J2-stat
-sqrt((nrow(car4)*(216-4))/(216-2))*mean(car4$scar)
-
-# Calculating variance (KPP 2018), and corresponding t-stat
-mean(car4$car)/sqrt(kpp_var(ew4,car4))
-kpp_var(ew4, car4)
-
 # T-test
-t.test(car_4$car, alternative = "two.sided")
+t.test(car4$car, alternative = "two.sided")
 t.test(car4$scar, alternative = "two.sided")
+

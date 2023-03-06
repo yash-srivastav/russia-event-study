@@ -24,7 +24,12 @@ returns <- read.csv("data/raw/crsp_returns.csv") |>
 
 firm_list <- returns |>
   distinct(COMNAM, TICKER) |>
-  mutate(firm_clean = cleanFirm(COMNAM)) 
+  mutate(firm_clean = cleanFirm(COMNAM)) |>
+  filter(COMNAM != "",
+         TICKER != "UAA") |>
+  group_by(COMNAM) |>
+  filter(n() == 1) |>
+  ungroup()
 
 ## Matching firms -------------------------------------------------------------
 mrg_firms <- firm_list |>
@@ -37,6 +42,9 @@ write_rds(mrg_firms, "data/interim/sample_firms.rds")
 ## Creating sample window -----------------------------------------------------
 # Sample window (7/1/2021 - 1/31/2022)
 sample_window <- returns |>
+  group_by(COMNAM, date) |>
+  filter(n() == 1) |>
+  ungroup() |>
   select(date, TICKER, COMNAM, RET, ewretd) |>
   mutate(date = as.character(date),
          date = as.Date(date, format = "%Y%m%d")) |>
@@ -49,6 +57,9 @@ write_rds(sample_window, "data/interim/sample_window.rds")
 ## Creating event window ------------------------------------------------------
 # Event window (2/1/2022 - 12/31/2022)
 event_window <- returns |>
+  group_by(COMNAM, date) |>
+  filter(n() == 1) |>
+  ungroup() |>
   select(date, TICKER, COMNAM, RET, ewretd) |>
   mutate(date = as.character(date),
          date = as.Date(date, format = "%Y%m%d")) |>
