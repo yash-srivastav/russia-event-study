@@ -37,6 +37,29 @@ ewprep <- function(df, win){
                                     announcement == 1 & date == `Announcement Date` + days(1) ~ `Announcement Date` + days(1))) |>
       filter(COMNAM != "")
   }
+  else if (win == 3){
+    df <- df |>
+      filter(COMNAM != "",
+             is.na(COMNAM) == F) |>
+      arrange(COMNAM, date) |>
+      mutate(day = wday(`Announcement Date`, label = TRUE),
+             leave = ifelse((Status == 3 & `Sub-Status` == 4) | (Status == 4 & `Sub-Status` == 5),
+                            1,
+                            0),
+             announcement = if_else(`Announcement Date` == date, 1, 0),
+             announcement = case_when(day == "Mon" & date <= `Announcement Date` + days(2) & date > `Announcement Date` ~ 1,
+                                      day == "Tue" & date <= `Announcement Date` + days(2) & date > `Announcement Date` ~ 1,
+                                      day == "Wed" & date <= `Announcement Date` + days(2) & date > `Announcement Date` ~ 1,
+                                      day == "Thu" & date <= `Announcement Date` + days(5) & date > `Announcement Date` ~ 1,
+                                      day == "Fri" & date <= `Announcement Date` + days(5) & date > `Announcement Date` ~ 1,
+                                      day == "Sat" & date <= `Announcement Date` + days(5) & date > `Announcement Date` ~ 1,
+                                      day == "Sun" & date <= `Announcement Date` + days(4) & date > `Announcement Date` ~ 1,
+                                      TRUE ~ announcement),
+             event_date = case_when(announcement == 1 & date == `Announcement Date` ~ `Announcement Date`,
+                                    announcement == 1 & date == `Announcement Date` + days(1) ~ `Announcement Date` + days(1),
+                                    announcement == 1 & date == `Announcement Date` + days(2) ~ `Announcement Date` + days(2))) |>
+      filter(COMNAM != "")
+  }
   else if(win == 4){
     df <- df |>
       filter(COMNAM != "",

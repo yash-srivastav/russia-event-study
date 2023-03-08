@@ -57,11 +57,13 @@ event_window <- event_window |>
 
 ## Looking at CARs for event window of t --------------------------------------
 ew1 <- ewprep(event_window, 1)
+# write_rds(ew1, "data/interim/event_windows/ew1.rds")
 
 # Dataframe of CARs
 car1 <- build_car(ew1) |>
   left_join(sample_sd, by = "COMNAM") |>
   mutate(scar = car/sd_ar)
+mean(car1$car)
 
 # Testing whether E[AR] = 0 (Campbell, Lo, McKinlay 1997)
 # J1-stat
@@ -73,24 +75,25 @@ sqrt((nrow(car1)*(216-4))/(216-2))*mean(car1$scar)
 mean(car1$car)/sqrt(kpp_var(ew1,car1))
 kpp_var(ew1, car1)
 
-# Calculating covariance-variance ratio adjusted st. errors and corresponding t-stat; preferred
+# Calculating covariance-variance ratio adjusted st. errors and corresponding t-stat (KPP 2018); preferred
 mean(car1$scar)/sqrt(vcov_adj_var(ew1, sample_window, 1))
 
 
 # Plotting CARs
 ggplot(data = car1, aes(x = car)) +
   geom_histogram(color = "black", fill = "white")
-
-ggplot(data = car1, aes(x = scar)) +
+ggplot(data = car1, aes(x = car)) +
   geom_histogram(color = "black", fill = "white")
 
 ## Looking at CARs for event window of t, t+1 ---------------------------------
 ew2 <- ewprep(event_window, 2)
+# write_rds(ew2, "data/interim/event_windows/ew2.rds")
 
 # Dataframe of CARs
 car2 <- build_car(ew2) |>
   left_join(sample_sd, by = "COMNAM") |>
   mutate(scar = car/sd_ar)
+mean(car2$car, na.rm = TRUE)
 
 # Testing whether E[AR] = 0 (Campbell, Lo, McKinlay 1997)
 #J1-stat
@@ -102,12 +105,47 @@ sqrt((nrow(car2)*(216-4))/(216-2))*mean(car2$scar)
 mean(car2$car)/sqrt(kpp_var(ew2,car2))
 kpp_var(ew2, car2)
 
-# Calculating covariance-variance ratio adjusted st. errors and corresponding t-stat; preferred
+# Calculating covariance-variance ratio adjusted st. errors and corresponding t-stat (KPP 2018); preferred
 mean(car2$scar)/sqrt(vcov_adj_var(ew2, sample_window, 2))
 
 # Plotting CARs
 ggplot(data = car2, aes(x = car)) +
   geom_histogram(color = "black", fill = "white")
+ggplot(data = car2, aes(x = scar)) +
+  geom_histogram(color = "black", fill = "white")
+
+## Looking at CARs for event window of t,t+1,t+2 -------------------------------
+ew3 <- ewprep(event_window, 3)
+# write_rds(ew3, "data/interim/event_windows/ew3.rds")
+
+# Dataframe of CARs
+car3 <- build_car(ew3) |>
+  left_join(sample_sd, by = "COMNAM") |>
+  mutate(scar = car/sd_ar)
+mean(car3$car)
+mean(car3$scar, na.rm = TRUE)
+write_rds(car3, "data/interim/cars/car3.rds")
+
+# Testing whether E[AR] = 0 (Campbell, Lo, McKinlay 1997)
+# J1-stat
+mean(car3$car)/sqrt((1/(nrow(car3))^2)*sum(car3$sd_ar^2))
+# J2-stat
+sqrt((nrow(car3)*(216-4))/(216-2))*mean(car3$scar)
+
+# Calculating variance (KPP 2018) and corresponding t-stat; not preferred
+mean(car3$car)/sqrt(kpp_var(ew3,car1))
+kpp_var(ew3, car3)
+
+# Calculating covariance-variance ratio adjusted st. errors and corresponding t-stat (KPP 2018); preferred
+mean(car3$scar)/sqrt(vcov_adj_var(ew3, sample_window, 3))
+
+# Plotting CARs
+ggplot(data = car3, aes(x = car)) +
+  geom_histogram(color = "black", fill = "white")
+ggplot(data = car3, aes(x = scar)) +
+  geom_histogram(color = "black", fill = "white")
+
+write_rds(ew3, "data/interim/event_window/event_window_3.rds")
 
 ## Looking at CARs for event window of t, t+1, t+2, t+3 ------------------------
 ew4 <- ewprep(event_window, 4)
@@ -116,6 +154,8 @@ ew4 <- ewprep(event_window, 4)
 car4 <- build_car(ew4) |>
   left_join(sample_sd, by = "COMNAM") |>
   mutate(scar = car/sd_ar)
+mean(car4$car, na.rm = TRUE)
+mean(car4$scar, na.rm = TRUE)
 
 # Testing whether E[AR] = 0 (Campbell, Lo, McKinlay 1997)
 #J1-stat
@@ -127,8 +167,9 @@ sqrt((nrow(car4)*(216-4))/(216-2))*mean(car4$scar)
 mean(car4$car)/sqrt(kpp_var(ew4,car4))
 kpp_var(ew4, car4)
 
-# Calculating covariance-variance ratio adjusted st. errors and corresponding t-stat; preferred
+# Calculating covariance-variance ratio adjusted st. errors and corresponding t-stat (KPP 2018); preferred
 mean(car4$scar)/sqrt(vcov_adj_var(ew4, sample_window, 4))
+
 
 # Plotting CARs
 ggplot(data = car4, aes(x = car)) +

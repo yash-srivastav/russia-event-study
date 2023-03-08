@@ -2,10 +2,116 @@ setwd("/Users/yashsrivastav/Dropbox (Personal)/Personal_Projects/Russia")
 library(ggplot2)
 
 sample_firms <- read_rds("data/interim/sample_firms.rds")
+sample_window <- read_rds("data/interim/sample_window.rds")
+returns <- read.csv("data/raw/crsp_returns.csv")
+fnds <- read.csv("data/raw/sample_fundamentals.csv")
 
 ## Announcement date distribution ---------------------------------------------
-ggplot(data = sample_firms |>
+exit_dist <- ggplot(data = sample_firms |>
          filter(Status == 3),
        aes(x = `Announcement Date`)) +
   geom_histogram(color = "black", fill = "white") +
   ggtitle("When Firms Announce Exit from Russia")
+ggsave("figures/exit_dist.png")
+
+## Firm status distribution ---------------------------------------------------
+firm_status <- sample_firms |>
+  mutate(n = nrow(sample_firms)) |>
+  group_by(`Status Classification`, `Sub-Status Classification`) |>
+  summarise(proportion = n()/n) |>
+  distinct()
+
+## Market cap of firms that leave Russia --------------------------------------
+mkt_cap <- returns |>
+  mutate(date = as.character(date),
+         date = as.Date(date, format = "%Y%m%d")) |>
+  inner_join(sample_firms |>
+               select(-TICKER),
+             by = "COMNAM") |>
+  filter(date == as.Date("2022-01-31")) |>
+  mutate(mc = (PRC*SHROUT),
+         log_mc = log(mc))
+# Market cap of exiting firms
+mc_dist <- ggplot(mkt_cap |>
+                    filter(Status == 3 | Status == 4),
+                  aes(x = log_mc)) +
+  geom_histogram(color = "black", fill = "white") +
+  ggtitle("Distribution of Exiting Firms, by log market cap") +
+  xlab("log(Market Cap)")
+ggsave("figures/mc_distribution.png")
+
+# Boxplot of firm status by market cap
+ggplot(data = mkt_cap, aes(x = as.factor(`Status Classification`),
+                           y = log_mc,
+                           color = as.factor(`Status Classification`))) +
+  geom_boxplot() +
+  xlab("Status") +
+  ylab("log(Market Cap)") + 
+  labs(color = "Firm Status") +
+  ggtitle("Market Size by Firm Status")
+ggsave("figures/mc_boxplot.png")
+
+## ARs and SCARs before and after announcement ----------------------------------------
+ew3 <- read_rds("data/interim/event_windows/ew3.rds")
+pre_post <- ew3 |>
+  filter(Status == 3 | Status == 4) |>
+  mutate(rel_day = case_when(date == `Announcement Date` - days(5) ~ -5,
+                             date == `Announcement Date` - days(4) ~ -4,
+                             date == `Announcement Date` - days(3) ~ -3,
+                             date == `Announcement Date` - days(2) ~ -2,
+                             date == `Announcement Date` - days(1) ~ -1,
+                             date == `Announcement Date` ~ 0,
+                             date == `Announcement Date` + days(1) ~ 1,
+                             date == `Announcement Date` + days(2) ~ 2,
+                             date == `Announcement Date` + days(3) ~ 3,
+                             date == `Announcement Date` + days(4) ~ 4,
+                             date == `Announcement Date` + days(5) ~ 5)) |>
+  filter(is.na(rel_day) == F) |>
+  left_join(sample_sd, by = "COMNAM") |>
+  mutate(sar = ab_ret/sd_ar) |>
+  group_by(rel_day) |>
+  summarise(rel_aret = mean(ab_ret, na.rm = TRUE),
+            rel_sar = mean(sar, na.rm = TRUE),
+            rel_ewret = mean(ewretd, na.rm = TRUE)) |>
+  mutate(rel_car = cumsum(rel_aret),
+         rel_cewret = cumsum(rel_ewret),
+         rel_scar = cumsum(rel_sar))
+pre_post[1,5] <- 0
+pre_post[1,6] <- 0
+pre_post[1,7] <- 0
+
+# SCARs
+ggplot(pre_post, aes(x = rel_day, y = rel_scar)) +
+  geom_line()
+# CARs
+ggplot(pre_post, aes(x = rel_day, y = rel_car)) +
+  geom_line()
+
+## Looking at firm fundamentals -----------------------------------------------
+fnds <- fnds |>
+  mutate(gross_margin = (revt - cogs)/cogs,
+         liq_ratio = act/lct,
+         cash_ratio = ch/lct) |>
+  left_join(sample_firms, by = c("tic" = "TICKER"))
+fnds_reg <- fnds |>
+  select(tic, COMNAM, Status, gross_margin,
+         liq_ratio, cash_ratio)
+fnds_reg <- fnds_reg[is.finite(rowSums(fnds_reg)),]
+decision <- lm(Status ~ gross_margin + liq_ratio + cash_ratio,
+               data = fnds_reg)
+summary(decision)
+
+## Relationship between CARs and firm fundamentals -----------------------------
+car3 <- read_rds("data/interim/cars/car3.rds")
+car3 <- car3 |>
+  left_join(sample_firms |>
+              select(TICKER, COMNAM),
+            by = "COMNAM") |>
+  left_join(fnds_reg |>
+              select(-COMNAM), by = c("TICKER" = "tic")) |>
+  filter(gross_margin > -50)
+
+ggplot(data = car3, aes(x = gross_margin, y = car)) +
+  geom_point()
+ggplot(data = car3, aes(x = liq_ratio, y = car)) +
+  geom_point()
