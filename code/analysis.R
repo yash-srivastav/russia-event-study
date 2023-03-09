@@ -55,130 +55,123 @@ event_window <- event_window |>
                      `Status Classification`, `Sub-Status Classification`),
             by = "COMNAM")
 
-## Looking at CARs for event window of t --------------------------------------
+### Firms that left ---------------------------------------------------
+# Event window files
 ew1 <- ewprep(event_window, 1)
-# write_rds(ew1, "data/interim/event_windows/ew1.rds")
-
-# Dataframe of CARs
-car1 <- build_car(ew1) |>
-  left_join(sample_sd, by = "COMNAM") |>
-  mutate(scar = car/sd_ar)
-mean(car1$car)
-
-# Testing whether E[AR] = 0 (Campbell, Lo, McKinlay 1997)
-# J1-stat
-mean(car1$car)/sqrt((1/(nrow(car1))^2)*sum(car1$sd_ar^2))
-# J2-stat
-sqrt((nrow(car1)*(216-4))/(216-2))*mean(car1$scar)
-
-# Calculating variance (KPP 2018) and corresponding t-stat; not preferred
-mean(car1$car)/sqrt(kpp_var(ew1,car1))
-kpp_var(ew1, car1)
-
-# Calculating covariance-variance ratio adjusted st. errors and corresponding t-stat (KPP 2018); preferred
-mean(car1$scar)/sqrt(vcov_adj_var(ew1, sample_window, 1))
-
-
-# Plotting CARs
-ggplot(data = car1, aes(x = car)) +
-  geom_histogram(color = "black", fill = "white")
-ggplot(data = car1, aes(x = car)) +
-  geom_histogram(color = "black", fill = "white")
-
-## Looking at CARs for event window of t, t+1 ---------------------------------
 ew2 <- ewprep(event_window, 2)
-# write_rds(ew2, "data/interim/event_windows/ew2.rds")
-
-# Dataframe of CARs
-car2 <- build_car(ew2) |>
-  left_join(sample_sd, by = "COMNAM") |>
-  mutate(scar = car/sd_ar)
-mean(car2$car, na.rm = TRUE)
-
-# Testing whether E[AR] = 0 (Campbell, Lo, McKinlay 1997)
-#J1-stat
-mean(car2$car)/sqrt((1/(nrow(car2))^2)*sum(car2$sd_ar^2))
-#J2-stat
-sqrt((nrow(car2)*(216-4))/(216-2))*mean(car2$scar)
-
-# Calculating variance (KPP 2018), and corresponding t-stat
-mean(car2$car)/sqrt(kpp_var(ew2,car2))
-kpp_var(ew2, car2)
-
-# Calculating covariance-variance ratio adjusted st. errors and corresponding t-stat (KPP 2018); preferred
-mean(car2$scar)/sqrt(vcov_adj_var(ew2, sample_window, 2))
-
-# Plotting CARs
-ggplot(data = car2, aes(x = car)) +
-  geom_histogram(color = "black", fill = "white")
-ggplot(data = car2, aes(x = scar)) +
-  geom_histogram(color = "black", fill = "white")
-
-## Looking at CARs for event window of t,t+1,t+2 -------------------------------
 ew3 <- ewprep(event_window, 3)
-# write_rds(ew3, "data/interim/event_windows/ew3.rds")
-
-# Dataframe of CARs
-car3 <- build_car(ew3) |>
-  left_join(sample_sd, by = "COMNAM") |>
-  mutate(scar = car/sd_ar)
-mean(car3$car)
-mean(car3$scar, na.rm = TRUE)
-write_rds(car3, "data/interim/cars/car3.rds")
-
-# Testing whether E[AR] = 0 (Campbell, Lo, McKinlay 1997)
-# J1-stat
-mean(car3$car)/sqrt((1/(nrow(car3))^2)*sum(car3$sd_ar^2))
-# J2-stat
-sqrt((nrow(car3)*(216-4))/(216-2))*mean(car3$scar)
-
-# Calculating variance (KPP 2018) and corresponding t-stat; not preferred
-mean(car3$car)/sqrt(kpp_var(ew3,car1))
-kpp_var(ew3, car3)
-
-# Calculating covariance-variance ratio adjusted st. errors and corresponding t-stat (KPP 2018); preferred
-mean(car3$scar)/sqrt(vcov_adj_var(ew3, sample_window, 3))
-
-# Plotting CARs
-ggplot(data = car3, aes(x = car)) +
-  geom_histogram(color = "black", fill = "white")
-ggplot(data = car3, aes(x = scar)) +
-  geom_histogram(color = "black", fill = "white")
-
-write_rds(ew3, "data/interim/event_window/event_window_3.rds")
-
-## Looking at CARs for event window of t, t+1, t+2, t+3 ------------------------
 ew4 <- ewprep(event_window, 4)
 
-# Dataframe of CARs
-car4 <- build_car(ew4) |>
-  left_join(sample_sd, by = "COMNAM") |>
-  mutate(scar = car/sd_ar)
-mean(car4$car, na.rm = TRUE)
-mean(car4$scar, na.rm = TRUE)
+# write_rds(ew1, "data/interim/event_windows/ew1.rds")
+# write_rds(ew2, "data/interim/event_windows/ew3.rds")
+# write_rds(ew3, "data/interim/event_windows/ew3.rds")
+# write_rds(ew4, "data/interim/event_windows/ew4.rds")
 
-# Testing whether E[AR] = 0 (Campbell, Lo, McKinlay 1997)
-#J1-stat
-mean(car4$car)/sqrt((1/(nrow(car4))^2)*sum(car4$sd_ar^2))
-#J2-stat
-sqrt((nrow(car4)*(216-4))/(216-2))*mean(car4$scar)
+# CAR files
+car1 <- build_car(ew1, sample_sd) 
+car2 <- build_car(ew2, sample_sd) 
+car3 <- build_car(ew3, sample_sd) 
+car4 <- build_car(ew4, sample_sd)
 
-# Calculating variance (KPP 2018) and corresponding t-stat; not preferred
-mean(car4$car)/sqrt(kpp_var(ew4,car4))
-kpp_var(ew4, car4)
+# Mean CARs
+mean(car2$car)
+mean(car2$car)
+mean(car3$car)
+mean(car4$car)
 
-# Calculating covariance-variance ratio adjusted st. errors and corresponding t-stat (KPP 2018); preferred
+# Mean SCARs
+mean(car1$scar)
+mean(car2$scar)
+mean(car3$scar)
+mean(car4$scar)
+
+## Test stats
+# Covariance-variance ratio adjusted st. errors and corresponding t-stat (KPP 2018); preferred
+mean(car1$scar)/sqrt(vcov_adj_var(ew1, sample_window, 1))
+mean(car2$scar)/sqrt(vcov_adj_var(ew2, sample_window, 2))
+mean(car3$scar)/sqrt(vcov_adj_var(ew3, sample_window, 3))
 mean(car4$scar)/sqrt(vcov_adj_var(ew4, sample_window, 4))
 
+# J-stats, E[AR] = 0 (Campbell, Lo, McKinlay 1997)
+# J1-stat
+mean(car1$car)/sqrt((1/(nrow(car1))^2)*sum(car1$sd_ar^2))
+mean(car2$car)/sqrt((1/(nrow(car2))^2)*sum(car2$sd_ar^2))
+mean(car3$car)/sqrt((1/(nrow(car3))^2)*sum(car3$sd_ar^2))
+mean(car4$car)/sqrt((1/(nrow(car4))^2)*sum(car4$sd_ar^2))
+# J2-stat
+sqrt((nrow(car1)*(216-4))/(216-2))*mean(car1$scar)
+sqrt((nrow(car2)*(216-4))/(216-2))*mean(car2$scar)
+sqrt((nrow(car3)*(216-4))/(216-2))*mean(car3$scar)
+sqrt((nrow(car3)*(216-4))/(216-2))*mean(car3$scar)
 
-# Plotting CARs
+## CAR histograms
+# Event window == 1
+ggplot(data = car1, aes(x = car)) +
+  geom_histogram(color = "black", fill = "white")
+ggplot(data = car1, aes(x = car)) +
+  geom_histogram(color = "black", fill = "white")
+# Event window == 2
+ggplot(data = car2, aes(x = car)) +
+  geom_histogram(color = "black", fill = "white")
+ggplot(data = car2, aes(x = car)) +
+  geom_histogram(color = "black", fill = "white")
+# Event window == 3
+ggplot(data = car3, aes(x = car)) +
+  geom_histogram(color = "black", fill = "white")
+ggplot(data = car3, aes(x = car)) +
+  geom_histogram(color = "black", fill = "white")
+# Event window == 4
+ggplot(data = car4, aes(x = car)) +
+  geom_histogram(color = "black", fill = "white")
 ggplot(data = car4, aes(x = car)) +
   geom_histogram(color = "black", fill = "white")
 
-ggplot(data = car4, aes(x = scar)) +
-  geom_histogram(color = "black", fill = "white")
+## Firms that stayed -----------------------------------------------
+# Analysis files
+ew1_stay <- ewprep_stay(event_window, 1)
+ew2_stay <- ewprep_stay(event_window, 2)
+ew3_stay <- ewprep_stay(event_window, 3)
+ew4_stay <- ewprep_stay(event_window, 4)
 
-# T-test
-t.test(car4$car, alternative = "two.sided")
-t.test(car4$scar, alternative = "two.sided")
+# write_rds(ew1_stay, "data/interim/event_windows/ew1_stay.rds")
+# write_rds(ew2_stay, "data/interim/event_windows/ew2_stay.rds")
+# write_rds(ew3_stay, "data/interim/event_windows/ew3_stay.rds")
+# write_rds(ew4_stay, "data/interim/event_windows/ew4_stay.rds")
+
+# CAR files
+car1_stay <- build_car_stay(ew1_stay, sample_sd)
+car2_stay <- build_car_stay(ew2_stay, sample_sd)
+car3_stay <- build_car_stay(ew3_stay, sample_sd)
+car4_stay <- build_car_stay(ew4_stay, sample_sd)
+
+# CAR means
+mean(car1_stay$car)
+mean(car2_stay$car)
+mean(car3_stay$car)
+mean(car4_stay$car)
+
+# SCAR means
+mean(car1_stay$scar)
+mean(car2_stay$scar)
+mean(car3_stay$scar)
+mean(car4_stay$scar)
+
+## Test stats
+# Covariance-variance ratio adjusted st. errors and corresponding t-stat (KPP 2018); preferred
+mean(car1_stay$scar)/sqrt(vcov_adj_var(ew1, sample_window, 1))
+mean(car2_stay$scar)/sqrt(vcov_adj_var(ew2, sample_window, 2))
+mean(car3_stay$scar)/sqrt(vcov_adj_var(ew3, sample_window, 3))
+mean(car4_stay$scar)/sqrt(vcov_adj_var(ew4, sample_window, 4))
+
+# J-stats, E[AR] = 0 (Campbell, Lo, McKinlay 1997)
+# J1-stat
+mean(car1_stay$car)/sqrt((1/(nrow(car1_stay))^2)*sum(car1_stay$sd_ar^2))
+mean(car2_stay$car)/sqrt((1/(nrow(car2_stay))^2)*sum(car2_stay$sd_ar^2))
+mean(car3_stay$car)/sqrt((1/(nrow(car3_stay))^2)*sum(car3_stay$sd_ar^2))
+mean(car4_stay$car)/sqrt((1/(nrow(car4_stay))^2)*sum(car4_stay$sd_ar^2))
+# J2-stat
+sqrt((nrow(car1_stay)*(216-4))/(216-2))*mean(car1_stay$scar)
+sqrt((nrow(car2_stay)*(216-4))/(216-2))*mean(car2_stay$scar)
+sqrt((nrow(car3_stay)*(216-4))/(216-2))*mean(car3_stay$scar)
+sqrt((nrow(car3_stay)*(216-4))/(216-2))*mean(car3_stay$scar)
 

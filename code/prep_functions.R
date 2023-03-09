@@ -86,11 +86,112 @@ ewprep <- function(df, win){
   }
 }
 
-build_car <- function(df){
+ewprep_stay <- function(df, win){
+  if (win == 1){
+    df <- df |>
+      filter(COMNAM != "",
+             is.na(COMNAM) == F) |>
+      arrange(COMNAM, date) |>
+      mutate(day = wday(`Announcement Date`, label = TRUE),
+             stay = ifelse((Status == 1 & `Sub-Status` == 1) | (Status == 2 & `Sub-Status` == 3),
+                            1,
+                            0),
+             announcement = if_else(`Announcement Date` == date, 1, 0),
+             announcement = case_when(day == "Sat" & date <= `Announcement Date` + days(2) & date > `Announcement Date` ~ 1,
+                                      day == "Sun" & date <= `Announcement Date` + days(1) & date > `Announcement Date` ~ 1,
+                                      TRUE ~ announcement),
+             event_date = case_when(announcement == 1 & date == `Announcement Date` ~ `Announcement Date`)) |>
+      filter(COMNAM != "")
+  }
+  else if(win == 2){
+    df <- df |>
+      filter(COMNAM != "",
+             is.na(COMNAM) == F) |>
+      arrange(COMNAM, date) |>
+      mutate(day = wday(`Announcement Date`, label = TRUE),
+             stay = ifelse((Status == 1 & `Sub-Status` == 1) | (Status == 2 & `Sub-Status` == 3),
+                            1,
+                            0),
+             announcement = if_else(`Announcement Date` == date, 1, 0),
+             announcement = case_when(day == "Mon" & date <= `Announcement Date` + days(1) & date > `Announcement Date` ~ 1,
+                                      day == "Tue" & date <= `Announcement Date` + days(1) & date > `Announcement Date` ~ 1,
+                                      day == "Wed" & date <= `Announcement Date` + days(1) & date > `Announcement Date` ~ 1,
+                                      day == "Thu" & date <= `Announcement Date` + days(1) & date > `Announcement Date` ~ 1,
+                                      day == "Fri" & date <= `Announcement Date` + days(3) & date > `Announcement Date` ~ 1,
+                                      day == "Sat" & date <= `Announcement Date` + days(4) & date > `Announcement Date` ~ 1,
+                                      day == "Sun" & date <= `Announcement Date` + days(3) & date > `Announcement Date` ~ 1,
+                                      TRUE ~ announcement),
+             event_date = case_when(announcement == 1 & date == `Announcement Date` ~ `Announcement Date`,
+                                    announcement == 1 & date == `Announcement Date` + days(1) ~ `Announcement Date` + days(1))) |>
+      filter(COMNAM != "")
+  }
+  else if (win == 3){
+    df <- df |>
+      filter(COMNAM != "",
+             is.na(COMNAM) == F) |>
+      arrange(COMNAM, date) |>
+      mutate(day = wday(`Announcement Date`, label = TRUE),
+             stay = ifelse((Status == 1 & `Sub-Status` == 1) | (Status == 2 & `Sub-Status` == 3),
+                            1,
+                            0),
+             announcement = if_else(`Announcement Date` == date, 1, 0),
+             announcement = case_when(day == "Mon" & date <= `Announcement Date` + days(2) & date > `Announcement Date` ~ 1,
+                                      day == "Tue" & date <= `Announcement Date` + days(2) & date > `Announcement Date` ~ 1,
+                                      day == "Wed" & date <= `Announcement Date` + days(2) & date > `Announcement Date` ~ 1,
+                                      day == "Thu" & date <= `Announcement Date` + days(5) & date > `Announcement Date` ~ 1,
+                                      day == "Fri" & date <= `Announcement Date` + days(5) & date > `Announcement Date` ~ 1,
+                                      day == "Sat" & date <= `Announcement Date` + days(5) & date > `Announcement Date` ~ 1,
+                                      day == "Sun" & date <= `Announcement Date` + days(4) & date > `Announcement Date` ~ 1,
+                                      TRUE ~ announcement),
+             event_date = case_when(announcement == 1 & date == `Announcement Date` ~ `Announcement Date`,
+                                    announcement == 1 & date == `Announcement Date` + days(1) ~ `Announcement Date` + days(1),
+                                    announcement == 1 & date == `Announcement Date` + days(2) ~ `Announcement Date` + days(2))) |>
+      filter(COMNAM != "")
+  }
+  else if(win == 4){
+    df <- df |>
+      filter(COMNAM != "",
+             is.na(COMNAM) == F) |>
+      arrange(COMNAM, date) |>
+      mutate(day = wday(`Announcement Date`, label = TRUE),
+             stay = ifelse((Status == 3 & `Sub-Status` == 4) | (Status == 4 & `Sub-Status` == 5),
+                            1,
+                            0),
+             announcement = if_else(`Announcement Date` == date, 1, 0),
+             announcement = case_when(day == "Mon" & date <= `Announcement Date` + days(3) & date > `Announcement Date` ~ 1,
+                                      day == "Tue" & date <= `Announcement Date` + days(3) & date > `Announcement Date` ~ 1,
+                                      day == "Wed" & date <= `Announcement Date` + days(6) & date > `Announcement Date` ~ 1,
+                                      day == "Thu" & date <= `Announcement Date` + days(6) & date > `Announcement Date` ~ 1,
+                                      day == "Fri" & date <= `Announcement Date` + days(6) & date > `Announcement Date` ~ 1,
+                                      day == "Sat" & date <= `Announcement Date` + days(5) & date > `Announcement Date` ~ 1,
+                                      day == "Sun" & date <= `Announcement Date` + days(4) & date > `Announcement Date` ~ 1,
+                                      TRUE ~ announcement),
+             event_date = case_when(announcement == 1 & date == `Announcement Date` ~ `Announcement Date`,
+                                    announcement == 1 & date == `Announcement Date` + days(1) ~ `Announcement Date` + days(1),
+                                    announcement == 1 & date == `Announcement Date` + days(2) ~ `Announcement Date` + days(2),
+                                    announcement == 1 & date == `Announcement Date` + days(3) ~ `Announcement Date` + days(3))) |>
+      filter(COMNAM != "")
+  }
+}
+
+
+build_car <- function(df, sample_sd){
   df <- df |>
     filter(leave == 1 & announcement == 1) |>
     group_by(COMNAM) |>
-    summarise(car = round(sum(ab_ret, na.rm = TRUE), 3))
+    summarise(car = round(sum(ab_ret, na.rm = TRUE), 3)) |>
+    left_join(sample_sd, by = "COMNAM") |>
+    mutate(scar = car/sd_ar)
+  
+}
+
+build_car_stay <- function(df, sample_sd){
+  df <- df |>
+    filter(stay == 1 & announcement == 1) |>
+    group_by(COMNAM) |>
+    summarise(car = round(sum(ab_ret, na.rm = TRUE), 3)) |>
+    left_join(sample_sd, by = "COMNAM") |>
+    mutate(scar = car/sd_ar)
 }
 
 kpp_var <- function(df, car){
@@ -141,7 +242,7 @@ vcov_adj_var <- function(df, sample_window, window){
                 values_from = sar,
                 values_fill = NA) |>
     select(-COMNAM)
-  covmat <- round(cor(xs4, use = "complete.obs"), 5)
+  covmat <- round(cor(xs, use = "complete.obs"), 5)
   v <- mean(covmat, na.rm = TRUE)
   
   # Calculating variance of single-day standardized ARs

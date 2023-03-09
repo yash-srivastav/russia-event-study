@@ -76,16 +76,72 @@ pre_post <- ew3 |>
   mutate(rel_car = cumsum(rel_aret),
          rel_cewret = cumsum(rel_ewret),
          rel_scar = cumsum(rel_sar))
+
 pre_post[1,5] <- 0
 pre_post[1,6] <- 0
 pre_post[1,7] <- 0
 
 # SCARs
 ggplot(pre_post, aes(x = rel_day, y = rel_scar)) +
-  geom_line()
+  geom_line() +
+  ggtitle("SCARs for Leaving/Exiting Firms") +
+  xlab("Day") +
+  ylab("SCAR")
+
 # CARs
 ggplot(pre_post, aes(x = rel_day, y = rel_car)) +
   geom_line()
+
+# Comparing CARs with firms that stay
+ew3_stay <- read_rds("data/interim/event_windows/ew3_stay.rds")
+pre_post_stay <- ew3_stay |>
+  filter(Status == 1 | Status == 2) |>
+  mutate(rel_day = case_when(date == `Announcement Date` - days(5) ~ -5,
+                             date == `Announcement Date` - days(4) ~ -4,
+                             date == `Announcement Date` - days(3) ~ -3,
+                             date == `Announcement Date` - days(2) ~ -2,
+                             date == `Announcement Date` - days(1) ~ -1,
+                             date == `Announcement Date` ~ 0,
+                             date == `Announcement Date` + days(1) ~ 1,
+                             date == `Announcement Date` + days(2) ~ 2,
+                             date == `Announcement Date` + days(3) ~ 3,
+                             date == `Announcement Date` + days(4) ~ 4,
+                             date == `Announcement Date` + days(5) ~ 5)) |>
+  filter(is.na(rel_day) == F) |>
+  left_join(sample_sd, by = "COMNAM") |>
+  mutate(sar = ab_ret/sd_ar) |>
+  group_by(rel_day) |>
+  summarise(rel_aret = mean(ab_ret, na.rm = TRUE),
+            rel_sar = mean(sar, na.rm = TRUE),
+            rel_ewret = mean(ewretd, na.rm = TRUE)) |>
+  mutate(rel_car = cumsum(rel_aret),
+         rel_cewret = cumsum(rel_ewret),
+         rel_scar = cumsum(rel_sar))
+pre_post <- pre_post |>
+  mutate(status = "leave") |>
+  rbind(pre_post_stay |>
+          mutate(status = "stay"))
+pre_post <- pre_post |>
+  pivot_longer(!c(rel_day, status))
+
+ggplot(data = pre_post |>
+         filter(name == "rel_car"),
+       aes(x = rel_day, y = value, color = status)) +
+  geom_line() +
+  ggtitle("Average CAR, relative to event day") +
+  xlab("Event Day") +
+  ylab("CAR")
+# ggsave("figures/event_car.png")
+
+ggplot(data = pre_post |>
+         filter(name == "rel_scar"),
+       aes(x = rel_day, y = value, color = status)) +
+  geom_line() + 
+  ggtitle("Average SCAR, relative to event day") +
+  xlab("Event Day") +
+  ylab("SCAR")
+# ggsave("figures/event_scar.png")
+
 
 ## Looking at firm fundamentals -----------------------------------------------
 fnds <- fnds |>
@@ -115,3 +171,12 @@ ggplot(data = car3, aes(x = gross_margin, y = car)) +
   geom_point()
 ggplot(data = car3, aes(x = liq_ratio, y = car)) +
   geom_point()
+
+## Looking at market returns over February and March --------------------------
+ggplot(data = event_window |>
+         distinct(date, ewretd) |>
+         filter(between(date, as.Date("2022-02-01"), as.Date("2022-12-31"))),
+       aes(x = date, y = ewretd)) +
+  geom_line()
+
+
