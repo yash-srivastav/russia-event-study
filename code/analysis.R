@@ -33,7 +33,7 @@ sample_sd <- sample_window |>
   summarise(sd_ar = sqrt((1/event_dur)*sum(aret^2, na.rm = TRUE))) |>
   distinct() |>
   filter(COMNAM != "")
-
+write_rds(sample_sd, "data/interim/sample_sd.rds")
 
 ## Merge alpha and beta coefficients with event window data --------------------
 event_window <- read_rds("data/interim/event_window.rds")
@@ -54,6 +54,7 @@ event_window <- event_window |>
               select(COMNAM, `Announcement Date`, Status, `Sub-Status`,
                      `Status Classification`, `Sub-Status Classification`),
             by = "COMNAM")
+write_rds(event_window, "data/interim/event_windows/event_window.rds")
 
 ### Firms that left ---------------------------------------------------
 # Event window files
@@ -74,7 +75,7 @@ car3 <- build_car(ew3, sample_sd)
 car4 <- build_car(ew4, sample_sd)
 
 # Mean CARs
-mean(car2$car)
+mean(car1$car)
 mean(car2$car)
 mean(car3$car)
 mean(car4$car)
