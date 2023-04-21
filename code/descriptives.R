@@ -1,5 +1,5 @@
 setwd("/Users/yashsrivastav/Dropbox (Personal)/Personal_Projects/Russia")
-library(ggplot2); library(stargazer)
+library(ggplot2); library(stargazer); library(lubridate)
 
 sample_firms <- read_rds("data/interim/sample_firms.rds")
 sample_window <- read_rds("data/interim/sample_window.rds")
@@ -12,7 +12,7 @@ ggplot(data = sample_firms |>
        aes(x = `Announcement Date`)) +
   geom_histogram(color = "black", fill = "white") +
   ggtitle("When Firms Announce Exit from Russia")
-ggsave("figures/exit_dist.png")
+ggsave("figures/exit_dist.pdf")
 
 ## Firm status distribution ---------------------------------------------------
 firm_status <- sample_firms |>
@@ -38,7 +38,7 @@ mc_dist <- ggplot(mkt_cap |>
   geom_histogram(color = "black", fill = "white") +
   ggtitle("Distribution of Exiting Firms, by log market cap") +
   xlab("log(Market Cap)")
-ggsave("figures/mc_distribution.png")
+ggsave("figures/mc_distribution.pdf")
 
 # Boxplot of firm status by market cap
 ggplot(data = mkt_cap, aes(x = as.factor(`Status Classification`),
@@ -49,24 +49,29 @@ ggplot(data = mkt_cap, aes(x = as.factor(`Status Classification`),
   ylab("log(Market Cap)") + 
   labs(color = "Firm Status") +
   ggtitle("Market Size by Firm Status")
-ggsave("figures/mc_boxplot.png")
+ggsave("figures/mc_boxplot.pdf")
 
 ## ARs and SCARs before and after announcement ----------------------------------------
 ew <- read_rds("data/interim/event_windows/event_window.rds")
 sample_sd <- read_rds("data/interim/sample_sd.rds")
+business_calendar <- create.calendar('my_calendar', weekdays = c('saturday','sunday'))
+
 pre_post <- ew |>
-  filter(Status == 3 | Status == 4) |>
-  mutate(rel_day = case_when(date == `Announcement Date` - days(5) ~ -5,
-                             date == `Announcement Date` - days(4) ~ -4,
-                             date == `Announcement Date` - days(3) ~ -3,
-                             date == `Announcement Date` - days(2) ~ -2,
-                             date == `Announcement Date` - days(1) ~ -1,
-                             date == `Announcement Date` ~ 0,
-                             date == `Announcement Date` + days(1) ~ 1,
-                             date == `Announcement Date` + days(2) ~ 2,
-                             date == `Announcement Date` + days(3) ~ 3,
-                             date == `Announcement Date` + days(4) ~ 4,
-                             date == `Announcement Date` + days(5) ~ 5)) |>
+  filter(Status == 3 | Status == 4,
+         is.na(`Announcement Date`) == F) |>
+  mutate(ann_date = case_when(wday(`Announcement Date`, label = TRUE) == "Sat" ~ bizdays::offset(`Announcement Date`, 1, cal = business_calendar),
+                              wday(`Announcement Date`, label = TRUE) == "Sun" ~ bizdays::offset(`Announcement Date`, 1, cal = business_calendar))) |> 
+  mutate(rel_day = case_when(date == bizdays::offset(ann_date, -5, cal = business_calendar) ~ -5,
+                             date == bizdays::offset(ann_date, -4, cal = business_calendar) ~ -4,
+                             date == bizdays::offset(ann_date, -3, cal = business_calendar) ~ -3,
+                             date == bizdays::offset(ann_date, -2, cal = business_calendar) ~ -2,
+                             date == bizdays::offset(ann_date, -1, cal = business_calendar) ~ -1,
+                             date == ann_date ~ 0,
+                             date == bizdays::offset(ann_date, 1, cal = business_calendar) ~ 1,
+                             date == bizdays::offset(ann_date, 2, cal = business_calendar) ~ 2,
+                             date == bizdays::offset(ann_date, 3, cal = business_calendar) ~ 3,
+                             date == bizdays::offset(ann_date, 4, cal = business_calendar) ~ 4,
+                             date == bizdays::offset(ann_date, 5, cal = business_calendar) ~ 5)) |>
   filter(is.na(rel_day) == F) |>
   left_join(sample_sd, by = "COMNAM") |>
   mutate(sar = ab_ret/sd_ar) |>
@@ -95,18 +100,21 @@ ggplot(pre_post, aes(x = rel_day, y = rel_car)) +
 
 # Comparing CARs with firms that stay
 pre_post_stay <- ew |>
-  filter(Status == 1 | Status == 2) |>
-  mutate(rel_day = case_when(date == `Announcement Date` - days(5) ~ -5,
-                             date == `Announcement Date` - days(4) ~ -4,
-                             date == `Announcement Date` - days(3) ~ -3,
-                             date == `Announcement Date` - days(2) ~ -2,
-                             date == `Announcement Date` - days(1) ~ -1,
-                             date == `Announcement Date` ~ 0,
-                             date == `Announcement Date` + days(1) ~ 1,
-                             date == `Announcement Date` + days(2) ~ 2,
-                             date == `Announcement Date` + days(3) ~ 3,
-                             date == `Announcement Date` + days(4) ~ 4,
-                             date == `Announcement Date` + days(5) ~ 5)) |>
+  filter(Status == 1 | Status == 2,
+         is.na(`Announcement Date`) == F) |>
+  mutate(ann_date = case_when(wday(`Announcement Date`, label = TRUE) == "Sat" ~ bizdays::offset(`Announcement Date`, 1, cal = business_calendar),
+                              wday(`Announcement Date`, label = TRUE) == "Sun" ~ bizdays::offset(`Announcement Date`, 1, cal = business_calendar))) |> 
+  mutate(rel_day = case_when(date == bizdays::offset(ann_date, -5, cal = business_calendar) ~ -5,
+                             date == bizdays::offset(ann_date, -4, cal = business_calendar) ~ -4,
+                             date == bizdays::offset(ann_date, -3, cal = business_calendar) ~ -3,
+                             date == bizdays::offset(ann_date, -2, cal = business_calendar) ~ -2,
+                             date == bizdays::offset(ann_date, -1, cal = business_calendar) ~ -1,
+                             date == ann_date ~ 0,
+                             date == bizdays::offset(ann_date, 1, cal = business_calendar) ~ 1,
+                             date == bizdays::offset(ann_date, 2, cal = business_calendar) ~ 2,
+                             date == bizdays::offset(ann_date, 3, cal = business_calendar) ~ 3,
+                             date == bizdays::offset(ann_date, 4, cal = business_calendar) ~ 4,
+                             date == bizdays::offset(ann_date, 5, cal = business_calendar) ~ 5)) |>
   filter(is.na(rel_day) == F) |>
   left_join(sample_sd, by = "COMNAM") |>
   mutate(sar = ab_ret/sd_ar) |>
@@ -131,7 +139,7 @@ ggplot(data = pre_post |>
   ggtitle("Average CAR, relative to event day") +
   xlab("Event Day") +
   ylab("CAR")
-# ggsave("figures/event_car.png")
+ggsave("figures/event_car.pdf")
 
 ggplot(data = pre_post |>
          filter(name == "rel_scar"),
@@ -140,8 +148,7 @@ ggplot(data = pre_post |>
   ggtitle("Average SCAR, relative to event day") +
   xlab("Event Day") +
   ylab("SCAR")
-# ggsave("figures/event_scar.png")
-
+ggsave("figures/event_scar.pdf")
 
 ## Looking at firm fundamentals -----------------------------------------------
 fnds <- fnds |>
@@ -162,6 +169,43 @@ decision <- lm(Status ~ gross_margin + liq_ratio + cash_ratio + lnmc + act,
                data = fnds_reg)
 summary(decision)
 stargazer(decision)
+
+## Fundamentals differences between exiting and staying firms ------------------
+ggplot(data = fnds |>
+         filter(gross_margin < 100 & gross_margin > -100),
+       aes(x = as.factor(`Status Classification`),
+                            y = gross_margin,
+                            color = as.factor(`Status Classification`))) +
+  geom_boxplot() +
+  xlab("Status") +
+  ylab("Gross Margin") + 
+  labs(color = "Firm Status") +
+  ggtitle("Gross Margin by Firm Status")
+ggsave("figures/gross_margin.pdf")
+
+ggplot(data = fnds |>
+         filter(cash_ratio < 100 & cash_ratio > -100),
+       aes(x = as.factor(`Status Classification`),
+           y = cash_ratio,
+           color = as.factor(`Status Classification`))) +
+  geom_boxplot() +
+  xlab("Status") +
+  ylab("Cash Ratio") + 
+  labs(color = "Firm Status") +
+  ggtitle("Cash Ratio by Firm Status")
+ggsave("figures/cash_ratio.pdf")
+
+ggplot(data = fnds |>
+         filter(liq_ratio < 100 & liq_ratio > -100),
+       aes(x = as.factor(`Status Classification`),
+           y = liq_ratio,
+           color = as.factor(`Status Classification`))) +
+  geom_boxplot() +
+  xlab("Status") +
+  ylab("Liquidity Ratio") + 
+  labs(color = "Firm Status") +
+  ggtitle("Liquidity Ratio by Firm Status")
+ggsave("figures/liquidity_ratio.pdf")
 
 ## Relationship between CARs and firm fundamentals -----------------------------
 car3 <- read_rds("data/interim/cars/car3.rds")
