@@ -60,7 +60,12 @@ pre_post <- ew |>
   filter(Status == 3 | Status == 4,
          is.na(`Announcement Date`) == F) |>
   mutate(ann_date = case_when(wday(`Announcement Date`, label = TRUE) == "Sat" ~ bizdays::offset(`Announcement Date`, 1, cal = business_calendar),
-                              wday(`Announcement Date`, label = TRUE) == "Sun" ~ bizdays::offset(`Announcement Date`, 1, cal = business_calendar))) |> 
+                              wday(`Announcement Date`, label = TRUE) == "Sun" ~ bizdays::offset(`Announcement Date`, 1, cal = business_calendar),
+                              wday(`Announcement Date`, label = TRUE) == "Mon" ~ bizdays::offset(`Announcement Date`, 0, cal = business_calendar),
+                              wday(`Announcement Date`, label = TRUE) == "Tue" ~ bizdays::offset(`Announcement Date`, 0, cal = business_calendar),
+                              wday(`Announcement Date`, label = TRUE) == "Wed" ~ bizdays::offset(`Announcement Date`, 0, cal = business_calendar),
+                              wday(`Announcement Date`, label = TRUE) == "Thu" ~ bizdays::offset(`Announcement Date`, 0, cal = business_calendar),
+                              wday(`Announcement Date`, label = TRUE) == "Fri" ~ bizdays::offset(`Announcement Date`, 0, cal = business_calendar))) |> 
   mutate(rel_day = case_when(date == bizdays::offset(ann_date, -5, cal = business_calendar) ~ -5,
                              date == bizdays::offset(ann_date, -4, cal = business_calendar) ~ -4,
                              date == bizdays::offset(ann_date, -3, cal = business_calendar) ~ -3,
@@ -88,22 +93,27 @@ pre_post <- ew |>
 # pre_post[1,7] <- 0
 
 # SCARs
-ggplot(pre_post, aes(x = rel_day, y = rel_scar)) +
-  geom_line() +
-  ggtitle("SCARs for Leaving/Exiting Firms") +
-  xlab("Day") +
-  ylab("SCAR")
+# ggplot(pre_post, aes(x = rel_day, y = rel_scar)) +
+#   geom_line() +
+#   ggtitle("SCARs for Leaving/Exiting Firms") +
+#   xlab("Day") +
+#   ylab("SCAR")
 
 # CARs
-ggplot(pre_post, aes(x = rel_day, y = rel_car)) +
-  geom_line()
+# ggplot(pre_post, aes(x = rel_day, y = rel_car)) +
+#   geom_line()
 
 # Comparing CARs with firms that stay
 pre_post_stay <- ew |>
   filter(Status == 1 | Status == 2,
          is.na(`Announcement Date`) == F) |>
   mutate(ann_date = case_when(wday(`Announcement Date`, label = TRUE) == "Sat" ~ bizdays::offset(`Announcement Date`, 1, cal = business_calendar),
-                              wday(`Announcement Date`, label = TRUE) == "Sun" ~ bizdays::offset(`Announcement Date`, 1, cal = business_calendar))) |> 
+                              wday(`Announcement Date`, label = TRUE) == "Sun" ~ bizdays::offset(`Announcement Date`, 1, cal = business_calendar),
+                              wday(`Announcement Date`, label = TRUE) == "Mon" ~ bizdays::offset(`Announcement Date`, 0, cal = business_calendar),
+                              wday(`Announcement Date`, label = TRUE) == "Tue" ~ bizdays::offset(`Announcement Date`, 0, cal = business_calendar),
+                              wday(`Announcement Date`, label = TRUE) == "Wed" ~ bizdays::offset(`Announcement Date`, 0, cal = business_calendar),
+                              wday(`Announcement Date`, label = TRUE) == "Thu" ~ bizdays::offset(`Announcement Date`, 0, cal = business_calendar),
+                              wday(`Announcement Date`, label = TRUE) == "Fri" ~ bizdays::offset(`Announcement Date`, 0, cal = business_calendar))) |> 
   mutate(rel_day = case_when(date == bizdays::offset(ann_date, -5, cal = business_calendar) ~ -5,
                              date == bizdays::offset(ann_date, -4, cal = business_calendar) ~ -4,
                              date == bizdays::offset(ann_date, -3, cal = business_calendar) ~ -3,
@@ -139,7 +149,10 @@ ggplot(data = pre_post |>
   ggtitle("Average CAR, relative to event day") +
   xlab("Event Day") +
   ylab("CAR")
-ggsave("figures/event_car.pdf")
+ggsave("figures/event_car.pdf",
+       width = 7,
+       height = 4,
+       units = "in")
 
 ggplot(data = pre_post |>
          filter(name == "rel_scar"),
@@ -148,7 +161,10 @@ ggplot(data = pre_post |>
   ggtitle("Average SCAR, relative to event day") +
   xlab("Event Day") +
   ylab("SCAR")
-ggsave("figures/event_scar.pdf")
+ggsave("figures/event_scar.pdf",
+       width = 7,
+       height = 4,
+       units = "in")
 
 ## Looking at firm fundamentals -----------------------------------------------
 fnds <- fnds |>

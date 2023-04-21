@@ -47,7 +47,7 @@ sample_window <- returns |>
   ungroup() |>
   select(date, TICKER, COMNAM, RET, ewretd) |>
   mutate(date = as.character(date),
-         date = as.Date(date, format = "%Y%m%d")) |>
+         date = as.Date(date, format = "%Y-%m-%d")) |>
   filter(between(date,
                  as.Date("2021-07-01"),
                  as.Date("2022-01-31")))
@@ -62,7 +62,7 @@ event_window <- returns |>
   ungroup() |>
   select(date, TICKER, COMNAM, RET, ewretd) |>
   mutate(date = as.character(date),
-         date = as.Date(date, format = "%Y%m%d")) |>
+         date = as.Date(date, format = "%Y-%m-%d")) |>
   filter(between(date,
                  as.Date("2022-02-01"),
                  as.Date("2022-12-31")))
